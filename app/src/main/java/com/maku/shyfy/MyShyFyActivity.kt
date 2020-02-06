@@ -12,7 +12,7 @@ import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pDeviceList
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Bundle
-import android.widget.Toast
+import android.widget.BaseAdapter
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -54,49 +54,6 @@ class MyShyFyActivity : AppCompatActivity(), WifiP2pManager.ChannelListener, Wif
         addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
         addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
         addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
-    }
-
-    private val peers = mutableListOf<WifiP2pDevice>()
-
-     val peerListListener = WifiP2pManager.PeerListListener { peerList ->
-        val refreshedPeers = peerList.deviceList
-        if (refreshedPeers != peers) {
-            peers.clear()
-            peers.addAll(refreshedPeers)
-
-            Timber.d("devices " + refreshedPeers.size)
-
-            val name = ArrayList<String>(refreshedPeers.size)
-
-            // If an AdapterView is backed by this data, notify it
-            // of the change. For instance, if you have a ListView of
-            // available peers, trigger an update.
-//            (listAdapter as WiFiPeerListAdapter).notifyDataSetChanged()
-
-            // Perform any other updates needed based on the new list of
-            // peers connected to the Wi-Fi P2P network.
-            viewManager = LinearLayoutManager(this)
-            viewAdapter = MyAdapter(name, this)
-
-            recyclerView = binding.peerListView.apply {
-                // use this setting to improve performance if you know that changes
-                // in content do not change the layout size of the RecyclerView
-                setHasFixedSize(true)
-
-                // use a linear layout manager
-                layoutManager = viewManager
-
-                // specify an viewAdapter (see also next example)
-                adapter = viewAdapter
-
-            }
-
-        }
-
-        if (peers.isEmpty()) {
-            Timber.d("No devices found")
-            return@PeerListListener
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -141,14 +98,46 @@ class MyShyFyActivity : AppCompatActivity(), WifiP2pManager.ChannelListener, Wif
 
         Timber.d("peers " + peers)
 
-        checkLocationPermission();
-
     }
+
+//    private val peers: List<WifiP2pDevice> = ArrayList()
+    private val peers = mutableListOf<WifiP2pDevice>()
 
     override fun onPeersAvailable(peerList: WifiP2pDeviceList?) {
         if (peerList != null) {
-            Timber.i( "Found some peers!!! " + peerList.deviceList.size)
-        };
+            peers.clear();
+
+            Timber.i("Found some peers!!! %s", peers)
+
+            peers.addAll(peerList.deviceList)
+
+            for (item in peers) {
+               Timber.d("wifi name %s", item.deviceName)
+            }
+
+            // Perform any other updates needed based on the new list of
+            // peers connected to the Wi-Fi P2P network.
+            viewManager = LinearLayoutManager(this,  RecyclerView.VERTICAL, false)
+
+            viewAdapter = MyAdapter(peers, this)
+
+            recyclerView = binding.peerListView.apply {
+                // use this setting to improve performance if you know that changes
+                // in content do not change the layout size of the RecyclerView
+                setHasFixedSize(true)
+
+                // use a linear layout manager
+                layoutManager = viewManager
+
+                // specify an viewAdapter (see also next example)
+                adapter = viewAdapter
+
+                viewAdapter .notifyDataSetChanged()
+            }
+
+        } else {
+            Timber.d("No devices found")
+        }
     }
     /**
      * @param isWifiP2pEnabled the isWifiP2pEnabled to set
@@ -168,6 +157,10 @@ class MyShyFyActivity : AppCompatActivity(), WifiP2pManager.ChannelListener, Wif
         unregisterReceiver(receiver)
     }
 
+    override fun onStart() {
+        super.onStart()
+        checkLocationPermission()
+    }
     override fun onChannelDisconnected() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

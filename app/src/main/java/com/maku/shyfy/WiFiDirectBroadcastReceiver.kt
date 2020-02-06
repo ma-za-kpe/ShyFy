@@ -77,7 +77,8 @@ class WiFiDirectBroadcastReceiver(
                 Timber.d("wifi state changing ...")
                 val thisDevice: WifiP2pDevice =
                     intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE)
-                Timber.d("......" + thisDevice.deviceAddress)
+                Timber.d("wifi name ......" + thisDevice.deviceName)
+                Timber.d("wifi address ......" + thisDevice.deviceAddress)
 
             }
         }
